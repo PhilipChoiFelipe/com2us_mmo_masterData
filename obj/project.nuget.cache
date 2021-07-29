@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "NnFKNyjqYWTZEriT3vfAOiPvq58gWiwHD4rIsKO5Fm8xT92VPBqSpJwMgGbHpcOiT2iBRXNUwr9yxDqsIqYYtQ==",
+  "success": true,
+  "projectFilePath": "D:\\practice\\c#\\excel_uploader\\com2us_mmo_masterData.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hyun\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\microsoft.win32.registry\\5.0.0\\microsoft.win32.registry.5.0.0.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\microsoft.win32.systemevents\\6.0.0-preview.6.21352.12\\microsoft.win32.systemevents.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.configuration.configurationmanager\\6.0.0-preview.6.21352.12\\system.configuration.configurationmanager.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.data.oledb\\6.0.0-preview.6.21352.12\\system.data.oledb.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.diagnostics.performancecounter\\6.0.0-preview.6.21352.12\\system.diagnostics.performancecounter.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.drawing.common\\6.0.0-preview.6.21352.12\\system.drawing.common.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.security.cryptography.protecteddata\\6.0.0-preview.6.21352.12\\system.security.cryptography.protecteddata.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.security.permissions\\6.0.0-preview.6.21352.12\\system.security.permissions.6.0.0-preview.6.21352.12.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512",
+    "C:\\Users\\hyun\\.nuget\\packages\\system.windows.extensions\\6.0.0-preview.6.21352.12\\system.windows.extensions.6.0.0-preview.6.21352.12.nupkg.sha512"
+  ],
+  "logs": []
+}
