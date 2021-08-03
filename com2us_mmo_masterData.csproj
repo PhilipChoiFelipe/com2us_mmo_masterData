@@ -13,6 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Dapper" Version="2.0.90" />
+      <PackageReference Include="MySqlConnector" Version="1.3.11" />
       <PackageReference Include="System.Data.OleDb" Version="6.0.0-preview.6.21352.12" />
     </ItemGroup>
 
