@@ -88,17 +88,17 @@ namespace com2us_mmo_masterData
                     {
                         getConnection(filePath, fileExt);
                         
-                        dtExcel = new DataTable();  
+                        DataTable sheet = new DataTable();  
                         String[] sheetNameList=GetSheetName();
                         ReadData(sheetNameList);
                         comboBox1.Items.AddRange(sheetNameList);
                         
                         if (sheetNameList.Length >= 1)
                         {
-                            dtExcel = ReadSheet(sheetNameList[0]);
+                            sheet = ReadSheet(sheetNameList[0]);
                             comboBox1.SelectedIndex = 0;
                             dataGridView1.Visible = true;
-                            dataGridView1.DataSource = dtExcel;
+                            dataGridView1.DataSource = sheet;
                         }
                  
                     } 
