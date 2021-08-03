@@ -6,31 +6,61 @@ using System.Windows.Forms;
 using System.Data.OleDb;
 using System.Runtime.CompilerServices;
 using Microsoft.VisualBasic.Logging;
-
-
+using MySqlConnector;
+using System.Configuration;
+using System.Linq;
+using Dapper;
+using System.Runtime.InteropServices;
+//PlantUML
+//TODO: 
+/*
+ * Datatable 배열로 만들기
+ * 데이터 오류 생기면 오류 정보 return
+ * api server에서 마스터 데이터 불러오기
+ * game server에서 db manager로 가져오기 
+ */
 namespace com2us_mmo_masterData
 {
     public partial class Form1 : Form
     {
         private OleDbConnection con = null;
         public Dictionary<String, DataTable> dictExcel = new Dictionary<string, DataTable>();
+        private MySqlConnection _sqlConnection;
         public Form1()
         {
             InitializeComponent();
+            this.Load += new EventHandler(Form1_Load);
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            AllocConsole();
+            try
+            {
+                string GameDBConnectionString = ConfigurationManager.AppSettings["DBConnection"];
+                _sqlConnection = new MySqlConnection(GameDBConnectionString);
+            }
+            catch (Exception ex)
+            {
+                string ErrorMessage = ex.ToString();
+                MessageBox.Show($"Failed to connect to database: {ErrorMessage}");
+            }
+            
+        }
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool AllocConsole();
 
         public void getConnection(string fileName, string fileExt)
         {
             string conn = string.Empty;
             if (fileExt.CompareTo(".xls") == 0) 
-                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HRD=Yes;IMEX=1';";   
+                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HDR=YES;IMEX=1;TypeGuessRows=0;';";   
             else  
-                conn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Extended Properties='Excel 12.0;HDR=NO';";
+                conn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Extended Properties='Excel 12.0;HDR=YES;';";
 
             con = new OleDbConnection(conn);
         }
-
-
         
         public DataTable ReadSheet(String sheetName) 
         {
@@ -72,12 +102,11 @@ namespace com2us_mmo_masterData
                 dictExcel.Add(k,v);
             }
         }
-
-
+        
         private void button1_Click(object sender, EventArgs e)
         {
-            string filePath = string.Empty;  
-            string fileExt = string.Empty;  
+            var filePath = string.Empty;  
+            var fileExt = string.Empty;  
             OpenFileDialog file = new OpenFileDialog(); 
             if (file.ShowDialog() == System.Windows.Forms.DialogResult.OK) 
             {  
@@ -102,7 +131,8 @@ namespace com2us_mmo_masterData
                         }
                  
                     } 
-                    catch (Exception ex) {  
+                    catch (Exception ex)
+                    {  
                         MessageBox.Show(ex.Message.ToString());  
                     }  
                 }
@@ -112,6 +142,7 @@ namespace com2us_mmo_masterData
                 }  
             }  
         }
+        
         private void button2_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -119,7 +150,35 @@ namespace com2us_mmo_masterData
         
         private void button3_Click(object sender, EventArgs e)
         {
+            _sqlConnection.Open();
+            foreach (KeyValuePair<string, DataTable> entry in dictExcel)
+            {
+                DynamicParameters parameter = new DynamicParameters();
+                var sheetName = entry.Key.Substring(0, entry.Key.Length - 1);
+                var sql = $"pInsert{sheetName}";
+                Console.WriteLine(sql);
+                string[] columnNames = entry.Value.Columns.Cast<DataColumn>().Select(x => x.ColumnName).ToArray();
+                for (int i = 0; i < columnNames.Length; i++)
+                {
+                    Console.WriteLine($"in{columnNames[i]}");
+                    Console.WriteLine(entry.Value.Rows[0][i]);
+                    Console.WriteLine(entry.Value.Rows[0][i].GetType());
+
+                    parameter.Add($"@in{columnNames[i]}", entry.Value.Rows[0][i], direction: ParameterDirection.Input);
+                }
+                parameter.Add("@InsertedId", dbType: DbType.Int32, direction: ParameterDirection.Output);
             
+                try
+                {
+                    _sqlConnection.Execute(sql, parameter, commandType: CommandType.StoredProcedure);
+                    var insertedId = parameter.Get<int>("@InsertedId");
+                    Console.WriteLine($"Inserted ID: {insertedId}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+            }
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)

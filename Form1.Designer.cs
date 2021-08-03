@@ -37,7 +37,7 @@
             ((System.ComponentModel.ISupportInitialize) (this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
-            // button1
+            // button1 open
             // 
             this.button1.Location = new System.Drawing.Point(37, 21);
             this.button1.Name = "button1";
@@ -47,7 +47,7 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // button2
+            // button2 closed
             // 
             this.button2.Location = new System.Drawing.Point(649, 21);
             this.button2.Name = "button2";
