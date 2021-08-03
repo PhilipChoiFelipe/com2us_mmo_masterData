@@ -4,8 +4,11 @@ using System.Data;
 using System.IO;
 using System.Windows.Forms;
 using System.Data.OleDb;
+using System.Runtime.CompilerServices;
+using Microsoft.VisualBasic.Logging;
 using MySqlConnector;
 using System.Configuration;
+using System.Linq;
 using Dapper;
 using System.Runtime.InteropServices;
 //PlantUML
@@ -18,10 +21,10 @@ using System.Runtime.InteropServices;
  */
 namespace com2us_mmo_masterData
 {
-    
     public partial class Form1 : Form
     {
-        public static DataTable dtExcel;
+        private OleDbConnection con = null;
+        public Dictionary<String, DataTable> dictExcel = new Dictionary<string, DataTable>();
         private MySqlConnection _sqlConnection;
         public Form1()
         {
@@ -47,28 +50,58 @@ namespace com2us_mmo_masterData
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool AllocConsole();
-        
-        public DataTable ReadExcel(string fileName, string fileExt) {  
-            string conn = string.Empty;  
-            DataTable dtexcel = new DataTable();  
+
+        public void getConnection(string fileName, string fileExt)
+        {
+            string conn = string.Empty;
             if (fileExt.CompareTo(".xls") == 0) 
-                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HRD=Yes;IMEX=1';";   
+                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HDR=YES;IMEX=1;TypeGuessRows=0;';";   
             else  
-                conn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Extended Properties='Excel 12.0;HDR=NO';"; 
-            using(OleDbConnection con = new OleDbConnection(conn)) {
-                try
-                {
-                    OleDbDataAdapter oleAdpt = new OleDbDataAdapter("select * from [NewCharacter$]", con);
-                    oleAdpt.Fill(dtexcel);
-                    Console.WriteLine(dtexcel.Columns);
-                }
-                catch
-                {
-                    MessageBox.Show("CharacterBaseData Sheet Not Found.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }  
-            }  
-            return dtexcel;  
+                conn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Extended Properties='Excel 12.0;HDR=YES;';";
+
+            con = new OleDbConnection(conn);
+        }
+        
+        public DataTable ReadSheet(String sheetName) 
+        {
+            if (sheetName.LastIndexOf('$') == sheetName.Length - 1)
+                sheetName = sheetName.Substring(0, sheetName.Length - 1);
+            con.Open();
+            DataTable dtexcel = new DataTable();
+    
+            OleDbDataAdapter oleAdpt = new OleDbDataAdapter("select * from [" + sheetName + "$]", con);
+            oleAdpt.Fill(dtexcel);
+            con.Close();
+            return dtexcel;
         }  
+        
+        public String[] GetSheetName()
+        {
+            DataTable infoTable = null;
+            
+            con.Open();
+            infoTable = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+            String[] sheet = new String[infoTable.Rows.Count];
+            int idx = 0;
+            foreach (DataRow row in infoTable.Rows)
+            {
+                String sheetName = row["TABLE_NAME"].ToString();
+                sheet[idx++]=sheetName;
+            }
+            con.Close();
+            
+            return sheet;
+        }
+
+        void ReadData(String[] sheetNameList)
+        {
+            for (int i = 0; i < sheetNameList.Length; i++)
+            {
+                String k = sheetNameList[i];
+                DataTable v = ReadSheet(k);
+                dictExcel.Add(k,v);
+            }
+        }
         
         private void button1_Click(object sender, EventArgs e)
         {
@@ -79,50 +112,80 @@ namespace com2us_mmo_masterData
             {  
                 filePath = file.FileName;  
                 fileExt = Path.GetExtension(filePath); 
-                if (fileExt.CompareTo(".xls") == 0 || fileExt.CompareTo(".xlsx") == 0) 
-                {  
-                    try {  
-                        dtExcel = new DataTable();  
-                        dtExcel = ReadExcel(filePath, fileExt); 
-                        dataGridView1.Visible = true;  
-                        dataGridView1.DataSource = dtExcel;  
-                    } catch (Exception ex) {  
+                if (fileExt.CompareTo(".xls") == 0 || fileExt.CompareTo(".xlsx") == 0) {  
+                    try
+                    {
+                        getConnection(filePath, fileExt);
+                        
+                        DataTable sheet = new DataTable();  
+                        String[] sheetNameList=GetSheetName();
+                        ReadData(sheetNameList);
+                        comboBox1.Items.AddRange(sheetNameList);
+                        
+                        if (sheetNameList.Length >= 1)
+                        {
+                            sheet = ReadSheet(sheetNameList[0]);
+                            comboBox1.SelectedIndex = 0;
+                            dataGridView1.Visible = true;
+                            dataGridView1.DataSource = sheet;
+                        }
+                 
+                    } 
+                    catch (Exception ex)
+                    {  
                         MessageBox.Show(ex.Message.ToString());  
                     }  
-                } else {  
+                }
+                else 
+                {  
                     MessageBox.Show("Please choose .xls or .xlsx file only.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error); 
                 }  
             }  
         }
+        
         private void button2_Click(object sender, EventArgs e)
         {
-           
+            this.Close();
         }
         
         private void button3_Click(object sender, EventArgs e)
         {
             _sqlConnection.Open();
-            var SheetName = "NewCharacter";
-            DynamicParameters parameter = new DynamicParameters();
-            var sql = $"EXEC pInsert{SheetName}";
-            for (int i = 0; i < dtExcel.Columns.Count; i++)
+            foreach (KeyValuePair<string, DataTable> entry in dictExcel)
             {
-                Console.WriteLine(dtExcel.Rows[0][i]);
-                Console.WriteLine(dtExcel.Rows[1][i]);
-                parameter.Add($"@{dtExcel.Rows[0][i]}", dtExcel.Rows[1][i], direction: ParameterDirection.Input);
-            }
-            parameter.Add("@InsertedId", dbType: DbType.String, direction: ParameterDirection.Output);
+                DynamicParameters parameter = new DynamicParameters();
+                var sheetName = entry.Key.Substring(0, entry.Key.Length - 1);
+                var sql = $"pInsert{sheetName}";
+                Console.WriteLine(sql);
+                string[] columnNames = entry.Value.Columns.Cast<DataColumn>().Select(x => x.ColumnName).ToArray();
+                for (int i = 0; i < columnNames.Length; i++)
+                {
+                    Console.WriteLine($"in{columnNames[i]}");
+                    Console.WriteLine(entry.Value.Rows[0][i]);
+                    Console.WriteLine(entry.Value.Rows[0][i].GetType());
+
+                    parameter.Add($"@in{columnNames[i]}", entry.Value.Rows[0][i], direction: ParameterDirection.Input);
+                }
+                parameter.Add("@InsertedId", dbType: DbType.Int32, direction: ParameterDirection.Output);
             
-            try
-            {
-                _sqlConnection.Execute(sql, parameter, commandType: CommandType.StoredProcedure);
-                var insertedId = parameter.Get<int>("@InsertedId");
-                Console.WriteLine($"Inserted ID: {insertedId}");
+                try
+                {
+                    _sqlConnection.Execute(sql, parameter, commandType: CommandType.StoredProcedure);
+                    var insertedId = parameter.Get<int>("@InsertedId");
+                    Console.WriteLine($"Inserted ID: {insertedId}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DataTable sheet = new DataTable();
+            sheet = ReadSheet(comboBox1.Text.Trim());
+            dataGridView1.DataSource=sheet;
         }
     }
 }
