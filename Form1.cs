@@ -4,21 +4,12 @@ using System.Data;
 using System.IO;
 using System.Windows.Forms;
 using System.Data.OleDb;
-using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic.Logging;
 using MySqlConnector;
 using System.Configuration;
 using System.Linq;
 using Dapper;
-using System.Runtime.InteropServices;
-//PlantUML
-//TODO: 
-/*
- * Datatable 배열로 만들기
- * 데이터 오류 생기면 오류 정보 return
- * api server에서 마스터 데이터 불러오기
- * game server에서 db manager로 가져오기 
- */
+
+
 namespace com2us_mmo_masterData
 {
     public partial class Form1 : Form
@@ -34,7 +25,6 @@ namespace com2us_mmo_masterData
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            AllocConsole();
             try
             {
                 string GameDBConnectionString = ConfigurationManager.AppSettings["DBConnection"];
@@ -45,17 +35,13 @@ namespace com2us_mmo_masterData
                 string ErrorMessage = ex.ToString();
                 MessageBox.Show($"Failed to connect to database: {ErrorMessage}");
             }
-            
         }
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
 
         public void getConnection(string fileName, string fileExt)
         {
             string conn = string.Empty;
             if (fileExt.CompareTo(".xls") == 0) 
-                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HDR=YES;IMEX=1;TypeGuessRows=0;';";   
+                conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HDR=YES;IMEX=1;';";   
             else  
                 conn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Extended Properties='Excel 12.0;HDR=YES;';";
 
@@ -68,7 +54,6 @@ namespace com2us_mmo_masterData
                 sheetName = sheetName.Substring(0, sheetName.Length - 1);
             con.Open();
             DataTable dtexcel = new DataTable();
-    
             OleDbDataAdapter oleAdpt = new OleDbDataAdapter("select * from [" + sheetName + "$]", con);
             oleAdpt.Fill(dtexcel);
             con.Close();
@@ -78,7 +63,6 @@ namespace com2us_mmo_masterData
         public String[] GetSheetName()
         {
             DataTable infoTable = null;
-            
             con.Open();
             infoTable = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
             String[] sheet = new String[infoTable.Rows.Count];
@@ -89,7 +73,6 @@ namespace com2us_mmo_masterData
                 sheet[idx++]=sheetName;
             }
             con.Close();
-            
             return sheet;
         }
 
@@ -112,7 +95,8 @@ namespace com2us_mmo_masterData
             {  
                 filePath = file.FileName;  
                 fileExt = Path.GetExtension(filePath); 
-                if (fileExt.CompareTo(".xls") == 0 || fileExt.CompareTo(".xlsx") == 0) {  
+                if (fileExt.CompareTo(".xls") == 0 || fileExt.CompareTo(".xlsx") == 0) 
+                {  
                     try
                     {
                         getConnection(filePath, fileExt);
@@ -137,7 +121,7 @@ namespace com2us_mmo_masterData
                     }  
                 }
                 else 
-                {  
+                {
                     MessageBox.Show("Please choose .xls or .xlsx file only.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Error); 
                 }  
             }  
@@ -153,34 +137,35 @@ namespace com2us_mmo_masterData
             _sqlConnection.Open();
             foreach (KeyValuePair<string, DataTable> entry in dictExcel)
             {
-                DynamicParameters parameter = new DynamicParameters();
                 var sheetName = entry.Key.Substring(0, entry.Key.Length - 1);
-                var sql = $"pInsert{sheetName}";
-                Console.WriteLine(sql);
+                var paramList = "";
+                var valueList = "";
+                DynamicParameters parameter = new DynamicParameters();
                 string[] columnNames = entry.Value.Columns.Cast<DataColumn>().Select(x => x.ColumnName).ToArray();
+                
                 for (int i = 0; i < columnNames.Length; i++)
                 {
-                    Console.WriteLine($"in{columnNames[i]}");
-                    Console.WriteLine(entry.Value.Rows[0][i]);
-                    Console.WriteLine(entry.Value.Rows[0][i].GetType());
-
-                    parameter.Add($"@in{columnNames[i]}", entry.Value.Rows[0][i], direction: ParameterDirection.Input);
+                    paramList += $"{columnNames[i]},";
+                    valueList += $"@{columnNames[i]},";
+                    parameter.Add($"@{columnNames[i]}", entry.Value.Rows[0][i], direction: ParameterDirection.Input);
                 }
-                parameter.Add("@InsertedId", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            
+
+                paramList = paramList.TrimEnd(',');
+                valueList = valueList.TrimEnd(',');
+                var sqlQuery = String.Format("INSERT {0} ({1}) VALUES({2}) ", sheetName, paramList, valueList);
+                
                 try
                 {
-                    _sqlConnection.Execute(sql, parameter, commandType: CommandType.StoredProcedure);
-                    var insertedId = parameter.Get<int>("@InsertedId");
-                    Console.WriteLine($"Inserted ID: {insertedId}");
+                    var result = _sqlConnection.Execute(sqlQuery, parameter);
+                    MessageBox.Show($"{sheetName} 마스터 데이터가 성공적으로 입력됨");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.ToString());
+                    MessageBox.Show(String.Format("시트 에러 발생 {0}: {1}",sheetName, ex.ToString()));
                 }
             }
         }
-
+        
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             DataTable sheet = new DataTable();
