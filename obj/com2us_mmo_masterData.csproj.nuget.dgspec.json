@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ASUS\\RiderProjects\\com2us_mmo_masterData\\com2us_mmo_masterData.csproj": {}
+    "D:\\practice\\c#\\excel_uploader\\com2us_mmo_masterData.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ASUS\\RiderProjects\\com2us_mmo_masterData\\com2us_mmo_masterData.csproj": {
+    "D:\\practice\\c#\\excel_uploader\\com2us_mmo_masterData.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\RiderProjects\\com2us_mmo_masterData\\com2us_mmo_masterData.csproj",
+        "projectUniqueName": "D:\\practice\\c#\\excel_uploader\\com2us_mmo_masterData.csproj",
         "projectName": "com2us_mmo_masterData",
-        "projectPath": "C:\\Users\\ASUS\\RiderProjects\\com2us_mmo_masterData\\com2us_mmo_masterData.csproj",
-        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\RiderProjects\\com2us_mmo_masterData\\obj\\",
+        "projectPath": "D:\\practice\\c#\\excel_uploader\\com2us_mmo_masterData.csproj",
+        "packagesPath": "C:\\Users\\hyun\\.nuget\\packages\\",
+        "outputPath": "D:\\practice\\c#\\excel_uploader\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\hyun\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net5.0-windows"
@@ -37,6 +37,24 @@
       "frameworks": {
         "net5.0-windows7.0": {
           "targetAlias": "net5.0-windows",
+          "dependencies": {
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.0.90, )"
+            },
+            "MySqlConnector": {
+              "target": "Package",
+              "version": "[1.3.11, )"
+            },
+            "System.Data.OleDb": {
+              "target": "Package",
+              "version": "[6.0.0-preview.6.21352.12, )"
+            },
+            "ZLogger": {
+              "target": "Package",
+              "version": "[1.5.1, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -55,7 +73,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.301\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\5.0.302\\RuntimeIdentifierGraph.json"
         }
       }
     }
