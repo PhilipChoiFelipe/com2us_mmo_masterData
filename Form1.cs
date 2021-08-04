@@ -39,7 +39,7 @@ namespace com2us_mmo_masterData
 
         public void getConnection(string fileName, string fileExt)
         {
-            string conn = string.Empty;
+            var conn = string.Empty;
             if (fileExt.CompareTo(".xls") == 0) 
                 conn = @"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fileName + ";Extended Properties='Excel 8.0;HDR=YES;IMEX=1;';";   
             else  
@@ -48,10 +48,9 @@ namespace com2us_mmo_masterData
             con = new OleDbConnection(conn);
         }
         
-        public DataTable ReadSheet(String sheetName) 
+        public DataTable ReadSheet(String sheetName)
         {
-            if (sheetName.LastIndexOf('$') == sheetName.Length - 1)
-                sheetName = sheetName.Substring(0, sheetName.Length - 1);
+            sheetName = TrimSheetName(sheetName);
             con.Open();
             DataTable dtexcel = new DataTable();
             OleDbDataAdapter oleAdpt = new OleDbDataAdapter("select * from [" + sheetName + "$]", con);
@@ -66,10 +65,10 @@ namespace com2us_mmo_masterData
             con.Open();
             infoTable = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
             String[] sheet = new String[infoTable.Rows.Count];
-            int idx = 0;
+            var idx = 0;
             foreach (DataRow row in infoTable.Rows)
             {
-                String sheetName = row["TABLE_NAME"].ToString();
+                var sheetName = row["TABLE_NAME"].ToString();
                 sheet[idx++]=sheetName;
             }
             con.Close();
@@ -84,6 +83,17 @@ namespace com2us_mmo_masterData
                 DataTable v = ReadSheet(k);
                 dictExcel.Add(k,v);
             }
+        }
+
+        String TrimSheetName(String sheetName)
+        {
+            if (sheetName.LastIndexOf('$') == sheetName.Length - 1)
+            {
+                sheetName = sheetName.Substring(0, sheetName.Length - 1);
+            }
+
+            return sheetName;
+
         }
         
         private void button1_Click(object sender, EventArgs e)
@@ -104,6 +114,7 @@ namespace com2us_mmo_masterData
                         DataTable sheet = new DataTable();  
                         String[] sheetNameList=GetSheetName();
                         ReadData(sheetNameList);
+                        comboBox1.Items.Clear();
                         comboBox1.Items.AddRange(sheetNameList);
                         
                         if (sheetNameList.Length >= 1)
@@ -137,7 +148,7 @@ namespace com2us_mmo_masterData
             _sqlConnection.Open();
             foreach (KeyValuePair<string, DataTable> entry in dictExcel)
             {
-                var sheetName = entry.Key.Substring(0, entry.Key.Length - 1);
+                var sheetName = TrimSheetName(entry.Key);
                 var paramList = "";
                 var valueList = "";
                 DynamicParameters parameter = new DynamicParameters();
